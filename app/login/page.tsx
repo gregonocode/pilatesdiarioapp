@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase-browser";
+import Image from "next/image";
+
 
 const ACCENT_GRADIENT =
   "bg-[linear-gradient(180deg,#12E439_0%,#D8DE12_100%)]";
@@ -56,16 +58,24 @@ export default function LoginPage() {
       {/* Top bar / logo - fica simples no MVP */}
       <header className="w-full px-5 pt-4 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={`${ACCENT_GRADIENT} w-8 h-8 rounded-2xl`} />
-          <div className="flex flex-col leading-tight">
-            <span className="text-xs uppercase tracking-[0.18em] text-[#A1A1AA]">
-              Pilates Diário
-            </span>
-            <span className="text-sm font-semibold text-white">
-              Entrar no app
-            </span>
-          </div>
-        </div>
+  <Image
+    src="/logoo.svg"
+    alt="Pilates Diário"
+    width={32}
+    height={32}
+    className="rounded-2xl"
+    priority
+  />
+  <div className="flex flex-col leading-tight">
+    <span className="text-xs font-semibold tracking-[0.18em] text-[#A1A1AA] uppercase">
+      Pilates Diário
+    </span>
+    <span className="text-sm font-semibold text-white">
+      Entrar no app
+    </span>
+  </div>
+</div>
+
       </header>
 
       {/* Conteúdo principal */}
