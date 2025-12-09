@@ -296,8 +296,8 @@ export default function AplicativoHomePage() {
                 Consistência  perfeição
               </p>
               <p className="mt-1 text-[13px] text-[#14532D]">
-                Não precisa treinar uma hora por dia. O importante é aparecer
-                aqui, todo dia, só por alguns minutos — e você já fez isso hoje.
+                Melhor 1% todos os dias. O importante é aparecer
+                aqui, todo dia, só por alguns minutos, e você já fez isso hoje.
               </p>
             </div>
           </div>
@@ -486,8 +486,14 @@ export default function AplicativoHomePage() {
 /* -------------------- Helpers -------------------- */
 
 function pickExercicioDoDia(exercicios: Exercicio[]): Exercicio {
-  // Data base do programa — pode mudar depois se quiser
-  const baseDate = new Date("2025-01-01T00:00:00Z");
+  if (exercicios.length === 0) {
+    throw new Error("Lista de exercícios vazia");
+  }
+
+  // Define a data base em horário local (sem "Z")
+  // Janeiro é mês 0 no JS
+  const baseDate = new Date(2025, 0, 1); // 01/01/2025 local
+
   const today = new Date();
 
   const baseMid = new Date(
@@ -495,6 +501,7 @@ function pickExercicioDoDia(exercicios: Exercicio[]): Exercicio {
     baseDate.getMonth(),
     baseDate.getDate()
   ).getTime();
+
   const todayMid = new Date(
     today.getFullYear(),
     today.getMonth(),
@@ -503,9 +510,9 @@ function pickExercicioDoDia(exercicios: Exercicio[]): Exercicio {
 
   const diffDays = Math.max(
     0,
-    Math.floor((todayMid - baseMid) / (1000 * 60 * 60 * 24))
+    Math.floor((todayMid - baseMid) / 86_400_000) // 1000*60*60*24
   );
 
-  const index = exercicios.length > 0 ? diffDays % exercicios.length : 0;
+  const index = diffDays % exercicios.length;
   return exercicios[index];
 }
