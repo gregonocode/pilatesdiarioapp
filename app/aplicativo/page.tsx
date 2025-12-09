@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 import { Sparkles, PlayCircle, CheckCircle2, Clock } from "lucide-react";
+import Image from "next/image";
+
 
 const ACCENT_GRADIENT =
   "bg-[linear-gradient(90deg,#12E439_0%,#D8DE12_100%)]";
@@ -227,7 +229,9 @@ export default function AplicativoHomePage() {
         <div className="px-4 py-2 rounded-full bg-black/70 border border-white/10 text-[12px] text-[#E5E7EB]">
           Carregando seu treino de hoje...
         </div>
-      </div>
+        
+        </div>
+      
     );
   }
 
@@ -243,7 +247,7 @@ export default function AplicativoHomePage() {
             Muito bem, {nomeUsuario}! 💚
           </h1>
           <p className="mt-2 text-sm text-[#9CA3AF]">
-            Aos poucos você está deixando de ser sedentária. Amanhã eu te
+           <strong> Você está transformando sua rotina!</strong> Amanhã eu te
             espero aqui para o próximo exercício.
           </p>
         </header>
@@ -282,7 +286,7 @@ export default function AplicativoHomePage() {
             "
           >
             <div>
-              <p className="text-[11px] font-semibold text-[#14532D] uppercase tracking-[0.18em]">
+              <p className="text-[11px] font-semibold text-[#14532D] uppercase tracking-[0.18em] text-bold">
                 Consistência  perfeição
               </p>
               <p className="mt-1 text-[13px] text-[#14532D]">
@@ -290,6 +294,16 @@ export default function AplicativoHomePage() {
                 aqui, todo dia, só por alguns minutos, e você já fez isso hoje.
               </p>
             </div>
+          </div>
+          {/* Imagem abaixo do bloco verde */}
+          <div className="mt-4 flex justify-center">
+            <Image
+              src="/meditando.webp"
+              alt="Mulher meditando após concluir o treino de hoje"
+              width={320}
+              height={320}
+              className="h-auto w-auto max-w-full"
+            />
           </div>
         </section>
 
