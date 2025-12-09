@@ -296,12 +296,12 @@ export default function AplicativoHomePage() {
             </div>
           </div>
           {/* Imagem abaixo do bloco verde */}
-          <div className="mt-4 flex justify-center">
+          <div className="mt-2 flex justify-center">
             <Image
               src="/meditando.webp"
               alt="Mulher meditando após concluir o treino de hoje"
-              width={320}
-              height={320}
+              width={450}
+              height={450}
               className="h-auto w-auto max-w-full"
             />
           </div>
