@@ -41,16 +41,22 @@ export default function AplicativoHomePage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Timer de liberação do botão "Concluir"
+    // Timer de liberação do botão "Concluir"
   useEffect(() => {
-    if (!hasStarted) return;
+    if (!hasStarted || !exercicio) return;
+
     setCanComplete(false);
+
+    // usa a duração do exercício; se não tiver, cai num default de 30s
+    const duracaoMs = (exercicio.duracao_segundos ?? 30) * 1000;
+
     const timeout = setTimeout(() => {
       setCanComplete(true);
-    }, 30_000); // 30 segundos depois de clicar em "Iniciar"
+    }, duracaoMs);
 
     return () => clearTimeout(timeout);
-  }, [hasStarted]);
+  }, [hasStarted, exercicio]);
+
 
   useEffect(() => {
     async function load() {
@@ -344,18 +350,19 @@ export default function AplicativoHomePage() {
               )}
             </div>
 
-            {/* Player vertical */}
+            {/* Player vertical (Bunny embed via iframe) */}
             <div className="mt-2 rounded-3xl overflow-hidden border border-white/10 bg-black">
               <div className="relative w-full aspect-[9/16] bg-black">
-                <video
-                  ref={videoRef}
+                <iframe
                   src={exercicio.video_url}
-                  className="w-full h-full object-cover"
-                  controls
-                  playsInline
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  loading="lazy"
                 />
               </div>
             </div>
+
 
             {/* Ações */}
             <div className="space-y-2 pt-1">
