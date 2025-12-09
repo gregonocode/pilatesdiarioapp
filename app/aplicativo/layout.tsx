@@ -16,8 +16,15 @@ export default function AplicativoLayout({
 }) {
   const pathname = usePathname();
 
-  const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(href + "/");
+  const isActive = (href: string) => {
+  if (href === "/aplicativo") {
+    // Home só ativo na rota exata
+    return pathname === "/aplicativo";
+  }
+
+  // Para as outras abas continua valendo o startsWith
+  return pathname === href || pathname.startsWith(href + "/");
+};
 
   return (
     <div className="min-h-screen bg-[#0C0C0C] flex flex-col">
@@ -51,9 +58,9 @@ export default function AplicativoLayout({
           />
 
           <NavItem
-            href="/aplicativo/shopeee"
-            label="Shopeee"
-            active={isActive("/aplicativo/shopeee")}
+            href="/aplicativo/shopee"
+            label="Shopee"
+            active={isActive("/aplicativo/shopee")}
             // Ícone Shopee com react-icons
             icon={<SiShopee className="w-4 h-4" />}
           />
