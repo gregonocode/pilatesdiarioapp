@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 import { Sparkles, PlayCircle, CheckCircle2, Clock } from "lucide-react";
 
@@ -27,7 +27,6 @@ type Profile = {
 
 export default function AplicativoHomePage() {
   const supabase = supabaseBrowser();
-  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -153,17 +152,8 @@ export default function AplicativoHomePage() {
     return "você";
   }, [profile]);
 
-  async function handleStart() {
+  function handleStart() {
     setHasStarted(true);
-    // Opcional: dar play automático no vídeo
-    if (videoRef.current) {
-      try {
-        await videoRef.current.play();
-      } catch (e) {
-        // Alguns navegadores bloqueiam autoplay, então ignoramos erro
-        console.warn("Não deu pra dar play automático:", e);
-      }
-    }
   }
 
   async function handleConfirmComplete() {
@@ -310,6 +300,16 @@ export default function AplicativoHomePage() {
     );
   }
 
+  const videoSrc =
+    exercicio && exercicio.video_url
+      ? exercicio.video_url +
+        (hasStarted
+          ? exercicio.video_url.includes("?")
+            ? "&autoplay=true"
+            : "?autoplay=true"
+          : "")
+      : "";
+
   return (
     <div className="space-y-5 pb-4 mt-2">
       {/* Header */}
@@ -354,7 +354,7 @@ export default function AplicativoHomePage() {
             <div className="mt-2 rounded-3xl overflow-hidden border border-white/10 bg-black">
               <div className="relative w-full aspect-[9/16] bg-black">
                 <iframe
-                  src={exercicio.video_url}
+                  src={videoSrc}
                   className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
@@ -370,10 +370,14 @@ export default function AplicativoHomePage() {
                 type="button"
                 onClick={handleStart}
                 className={`
-                  w-full h-11 rounded-full text-sm font-semibold text-[#0C0C0C]
+                  w-full h-11 rounded-full text-sm font-semibold
                   flex items-center justify-center gap-2
-                  ${ACCENT_GRADIENT}
-                  shadow-[0_12px_30px_rgba(16,185,129,0.35)]
+                  transition
+                  ${
+                    hasStarted
+                      ? "bg-[#050505]/80 border border-white/10 text-[#E5E7EB]"
+                      : `${ACCENT_GRADIENT} text-[#0C0C0C] shadow-[0_12px_30px_rgba(16,185,129,0.35)]`
+                  }
                 `}
               >
                 <PlayCircle className="w-5 h-5" />
@@ -387,11 +391,10 @@ export default function AplicativoHomePage() {
                 className={`
                   w-full h-10 rounded-full text-[13px] font-medium
                   flex items-center justify-center gap-2
-                  border 
                   ${
                     !hasStarted || !canComplete
-                      ? "border-white/10 text-[#9CA3AF] bg-[#050505]/60"
-                      : "border-[#12E439]/60 text-[#E5E7EB] bg-[#050505]/80 hover:bg-[#0B0B0B]"
+                      ? "border border-white/10 text-[#9CA3AF] bg-[#050505]/60"
+                      : `${ACCENT_GRADIENT} text-[#0C0C0C] shadow-[0_12px_30px_rgba(16,185,129,0.35)] border-0`
                   }
                   transition
                 `}
@@ -516,3 +519,7 @@ function pickExercicioDoDia(exercicios: Exercicio[]): Exercicio {
   const index = diffDays % exercicios.length;
   return exercicios[index];
 }
+
+
+
+
