@@ -1,146 +1,112 @@
-// src/app/api/admin/exercicios/create/route.ts
+// src/app/api/upload-bunny/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
-import { createClient } from "@supabase/supabase-js";
+import crypto from "crypto";
 
-type ApiResponse =
-  | {
-      ok: true;
-      exercicio: unknown;
-    }
-  | {
-      ok: false;
-      message: string;
-    };
+const BUNNY_API_KEY = process.env.BUNNY_API_KEY as string;
+const BUNNY_LIBRARY_ID = process.env.BUNNY_LIBRARY_ID as string;
+
+interface BunnyApiResponse {
+  success: boolean;
+  message: string;
+  guid?: string;
+  tusEndpoint?: string;
+  signature?: string;
+  expire?: number;
+  libraryId?: string;
+  videoUrl?: string;
+  embedUrl?: string;
+  details?: string;
+}
 
 export async function POST(
   req: NextRequest
-): Promise<NextResponse<ApiResponse>> {
+): Promise<NextResponse<BunnyApiResponse>> {
   try {
-    const body = (await req.json()) as {
-      guid?: string;
-      titulo?: string;
-      descricao?: string;
-      nivel?: string | null;
-      ordem_dia?: number;
-      duracao_segundos?: number | null;
-    };
+    const body = await req.json();
+    const title = body.titulo as string | undefined;
 
-    const { guid, titulo, descricao, nivel, ordem_dia, duracao_segundos } = body;
+    if (!title) {
+      return NextResponse.json(
+        { success: false, message: "Título é obrigatório" },
+        { status: 400 }
+      );
+    }
+
+    if (!BUNNY_API_KEY || !BUNNY_LIBRARY_ID) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Variáveis BUNNY_API_KEY e BUNNY_LIBRARY_ID não configuradas.",
+        },
+        { status: 500 }
+      );
+    }
+
+    // 1) Criar vídeo no Bunny
+    const createRes = await fetch(
+      `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos`,
+      {
+        method: "POST",
+        headers: {
+          AccessKey: BUNNY_API_KEY,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ title }),
+      }
+    );
+
+    if (!createRes.ok) {
+      const details = await createRes.text();
+      console.error("Falha ao criar vídeo no Bunny:", details);
+      return NextResponse.json(
+        { success: false, message: "Falha ao criar vídeo", details },
+        { status: createRes.status }
+      );
+    }
+
+    const { guid } = (await createRes.json()) as { guid?: string };
 
     if (!guid) {
       return NextResponse.json(
-        { ok: false, message: "GUID do vídeo é obrigatório." },
-        { status: 400 }
-      );
-    }
-
-    if (!titulo) {
-      return NextResponse.json(
-        { ok: false, message: "Título é obrigatório." },
-        { status: 400 }
-      );
-    }
-
-    if (!ordem_dia || ordem_dia <= 0) {
-      return NextResponse.json(
-        { ok: false, message: "Ordem/dia inválido." },
-        { status: 400 }
-      );
-    }
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-    const adminEmailEnv = process.env.ADMIN_EMAIL;
-    const libraryId = process.env.BUNNY_LIBRARY_ID;
-
-    if (!libraryId) {
-      return NextResponse.json(
         {
-          ok: false,
-          message: "BUNNY_LIBRARY_ID não está configurado.",
+          success: false,
+          message: "Bunny não retornou GUID do vídeo.",
         },
         { status: 500 }
       );
     }
 
-    // 🔐 garante que é o admin
-    const cookieStore = await cookies();
+    // 2) Assinatura TUS
+    const expire = Math.floor(Date.now() / 1000) + 7 * 24 * 3600; // 7 dias
+    const toSign = `${BUNNY_LIBRARY_ID}${BUNNY_API_KEY}${expire}${guid}`;
+    const signature = crypto
+      .createHash("sha256")
+      .update(toSign)
+      .digest("hex");
 
-    const supabaseServer = createServerClient(supabaseUrl, anonKey, {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set() {},
-        remove() {},
-      },
+    const videoUrl = `https://vz-${guid}.b-cdn.net`;
+    const embedUrl = `https://iframe.mediadelivery.net/embed/${BUNNY_LIBRARY_ID}/${guid}`;
+
+    return NextResponse.json({
+      success: true,
+      message: "Pronto para upload via TUS",
+      tusEndpoint: "https://video.bunnycdn.com/tusupload",
+      signature,
+      expire,
+      libraryId: BUNNY_LIBRARY_ID,
+      guid,
+      videoUrl,
+      embedUrl,
     });
-
-    const {
-      data: { user },
-    } = await supabaseServer.auth.getUser();
-
-    const adminEmail = adminEmailEnv?.trim().toLowerCase() ?? null;
-    const userEmail = user?.email?.trim().toLowerCase() ?? null;
-
-    if (!user || (adminEmail && userEmail !== adminEmail)) {
-      return NextResponse.json(
-        { ok: false, message: "Acesso não autorizado." },
-        { status: 403 }
-      );
-    }
-
-    // Monta a URL de embed a partir do guid
-    const embedUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${guid}`;
-
-    // Inserir na tabela exercicios usando service role
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { persistSession: false },
-    });
-
-    const { data, error } = await supabaseAdmin
-      .from("exercicios")
-      .insert([
-        {
-          titulo,
-          descricao: descricao || null,
-          video_url: embedUrl,
-          duracao_segundos: duracao_segundos ?? null,
-          nivel: nivel || null,
-          ordem_dia,
-          ativo: true,
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Erro ao inserir exercício no Supabase:", error);
-      return NextResponse.json(
-        {
-          ok: false,
-          message: "Erro ao salvar o exercício no banco.",
-        },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        ok: true,
-        exercicio: data,
-      },
-      { status: 200 }
-    );
   } catch (error) {
-    console.error("Erro geral em /api/admin/exercicios/create:", error);
+    console.error("Erro inesperado no handler POST de /api/upload-bunny:", error);
     return NextResponse.json(
       {
-        ok: false,
-        message: "Erro interno ao criar exercício.",
+        success: false,
+        message: "Erro interno",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );
