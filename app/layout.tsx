@@ -13,8 +13,33 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pilates Diario",
-  description: "Seu aplicativo de Pilates",
+  title: {
+    default: "Pilates Diário",
+    template: "%s | Pilates Diário",
+  },
+  description: "Seu aplicativo de pilates diário em poucos minutos.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      {
+        url: "/icons/pilates-192.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
+      {
+        url: "/icons/pilates-512.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  themeColor: "#0C0C0C",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Pilates Diário",
+  },
 };
 
 export default function RootLayout({
